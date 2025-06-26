@@ -3,452 +3,695 @@
 socks-port: 7891
 redir-port: 7892
 tproxy-port: 7895
-mixed-port: 7896
+routing-mark: 1234
+ipv6: true
 allow-lan: true
-mode: rule
-log-level: warning
-ipv6: false
+unified-delay: true
+tcp-concurrent: true
+log-level: info
+bind-address: "*"
 find-process-mode: strict
+global-client-fingerprint: chrome
+keep-alive-interval: 15
+keep-alive-idle: 600
+skip-auth-prefixes:
+  - 192.168.1.0/24
+  - 10.10.10.0/24
+  - 192.168.31.0/24
+  - 192.168.100.0/24
+  - 127.0.0.1/8
+
 external-ui-url: https://github.com/Zephyruso/zashboard/releases/latest/download/dist.zip
 external-ui-name: zashboard
 external-ui: ui
-external-controller: 0.0.0.0:9090
+external-controller: 10.10.10.8:9090
+#secret: yyds666
+
 profile:
   store-selected: true
   store-fake-ip: true
-unified-delay: true
-tcp-concurrent: true
-global-client-fingerprint: chrome
 
-### DNS配置
+sniffer:
+  enable: true
+  override-destination: false
+  force-dns-mapping: true
+  parse-pure-ip: true
+
 dns:
   enable: true
   listen: 0.0.0.0:1053
-  prefer-h3: true
-  ipv6: false
+  ipv6: true
   enhanced-mode: fake-ip
-  fake-ip-range: 198.18.0.0/15
-
-  # fake-ip-filter end
-  respect-rules: true
+  fake-ip-range: 198.18.0.1/15
+  default-nameserver:
+    - 10.10.10.53
   nameserver:
-    - 10.10.10.53
-  proxy-server-nameserver:
-    - 10.10.10.53
-### 域名嗅探
-sniffer:
-  enable: true
-  sniff:
-    HTTP:
-      ports: [80, 8080-8880]
-      override-destination: true
-    TLS:
-      ports: [443, 8443]
-    QUIC:
-      ports: [443, 8443]
-  skip-domain:
-    - "Mijia Cloud"
-    - "+.push.apple.com"
-
-### Tunnel配置
-tun:
-  enable: true
-  stack: system
-  device: Ethernet 99
-  auto-route: true
-  auto-detect-interface: true
-  dns-hijack:
-    - any:53
-    - tcp://any:53
-  strict-route: true
-  mtu: 1500
-  # 如果有使用zerotier或者headscale等，需要自己配置排除自己的网段
-  # route-exclude-address: ["192.168.110.0/24"]
-
-### 节点配置
-NodeParam:
-  &NodeParam {
-    type: http,
-    interval: 86400,
-    health-check:
-      { enable: true, url: "http://cp.cloudflare.com", interval: 300 },
-  }
-# 节点订阅
-proxy-providers:
-  Node-1:
-    url: "替换订阅链接"
-    <<: *NodeParam
-    path: "./proxy_provider/providers.yaml"
-  # Node-2:
-  #   url: '替换订阅链接'
-  #   <<: *NodeParam
-  #   path: './proxy_provider/providers.yaml'
-
-# 节点筛选
-FilterHK: &FilterHK "^(?=.*(香港|HK|Hong|🇭🇰))^(?!.*(网站|地址|剩余|过期|时间|有效|网址|禁止|邮箱|发布|客服|订阅|节点)).*$"
-FilterJP: &FilterJP "^(?=.*(日本|JP|Japan|🇯🇵))^(?!.*(网站|地址|剩余|过期|时间|有效|网址|禁止|邮箱|发布|客服|订阅|节点)).*$"
-FilterKR: &FilterKR "^(?=.*(韩国|韓|KR|Korea|🇰🇷))^(?!.*(网站|地址|剩余|过期|时间|有效|网址|禁止|邮箱|发布|客服|订阅|节点)).*$"
-FilterSG: &FilterSG "^(?=.*(新加坡|狮城|SG|Singapore|🇸🇬))^(?!.*(网站|地址|剩余|过期|时间|有效|网址|禁止|邮箱|发布|客服|订阅|节点)).*$"
-FilterUS: &FilterUS "^(?=.*(美国|US|United States|America|🇺🇸))^(?!.*(网站|地址|剩余|过期|时间|有效|网址|禁止|邮箱|发布|客服|订阅|节点)).*$"
-FilterUK: &FilterUK "^(?=.*(英国|UK|United Kingdom|🇬🇧))^(?!.*(网站|地址|剩余|过期|时间|有效|网址|禁止|邮箱|发布|客服|订阅|节点)).*$"
-FilterFR: &FilterFR "^(?=.*(法国|FR|France|🇫🇷))^(?!.*(网站|地址|剩余|过期|时间|有效|网址|禁止|邮箱|发布|客服|订阅|节点)).*$"
-FilterDE: &FilterDE "^(?=.*(德国|DE|Germany|🇩🇪))^(?!.*(网站|地址|剩余|过期|时间|有效|网址|禁止|邮箱|发布|客服|订阅|节点)).*$"
-FilterTW: &FilterTW "^(?=.*(台湾|TW|Taiwan|Wan|🇹🇼|🇨🇳))^(?!.*(网站|地址|剩余|过期|时间|有效|网址|禁止|邮箱|发布|客服|订阅|节点)).*$"
-FilterOthers: &FilterOthers "^(?!.*(🇭🇰|HK|Hong|香港|🇹🇼|TW|Taiwan|Wan|🇯🇵|JP|Japan|日本|🇸🇬|SG|Singapore|狮城|🇺🇸|US|United States|America|美国|🇩🇪|DE|Germany|德国|🇬🇧|UK|United Kingdom|英国|🇰🇷|KR|Korea|韩国|韓|🇫🇷|FR|France|法国)).*$"
-FilterAll: &FilterAll '^(?=.*(.))(?!.*((?i)群|邀请|返利|循环|官网|客服|网站|网址|获取|订阅|流量|到期|机场|下次|版本|官址|备用|过期|已用|联系|邮箱|工单|贩卖|通知|倒卖|防止|国内|地址|频道|无法|说明|使用|提示|特别|访问|支持|教程|关注|更新|作者|加入|(\b(USE|USED|TOTAL|EXPIRE|EMAIL|Panel|Channel|Author)\b|(\d{4}-\d{2}-\d{2}|\d+G)))).*$'
-
-Select:
-  &Select {
-    type: select,
-    url: "http://cp.cloudflare.com",
-    disable-udp: false,
-    hidden: false,
-    include-all: true,
-  }
-Auto:
-  &Auto {
-    type: url-test,
-    url: "http://cp.cloudflare.com",
-    interval: 300,
-    tolerance: 50,
-    disable-udp: false,
-    hidden: true,
-    include-all: true,
-  }
+    - 10.10.10.53:7777
 
 # 策略组
 proxy-groups:
   - {
-      name: 🎯 节点选择,
+      name: 全球手动,
       type: select,
-      proxies: [自动选择, 手动选择, DIRECT],
-      url: https://cp.cloudflare.com,
-      icon: https://raw.githubusercontent.com/Orz-3/mini/master/Color/Static.png,
+      include-all: true,
+      filter: *FilterAll,
+      icon: https://git.imee.me/https://github.com/Koolson/Qure/raw/master/IconSet/Color/Clubhouse.png,
     }
   - {
-      name: 手动选择,
+      name: 默认代理,
+      <<: *SelectFB,
+      icon: https://git.imee.me/https://github.com/Koolson/Qure/raw/master/IconSet/Color/Static.png,
+    }
+  - {
+      name: AI平台,
+      <<: *SelectUS,
+      include-all: true,
+      filter: *FilterAll,
+      icon: https://git.imee.me/https://github.com/Koolson/Qure/raw/master/IconSet/Color/AI.png,
+    }
+  - {
+      name: Emby,
+      <<: *SelectProxy,
+      icon: https://git.imee.me/https://github.com/Koolson/Qure/raw/master/IconSet/Color/Emby.png,
+    }
+  - {
+      name: YouTube,
+      <<: *SelectProxy,
+      icon: https://git.imee.me/https://github.com/Koolson/Qure/raw/master/IconSet/Color/YouTube.png,
+    }
+  - {
+      name: NetFlix,
+      <<: *SelectProxy,
+      icon: https://git.imee.me/https://github.com/Koolson/Qure/raw/master/IconSet/Color/Netflix.png,
+    }
+  - {
+      name: 国际媒体,
+      <<: *SelectProxy,
+      icon: https://git.imee.me/https://github.com/Koolson/Qure/raw/master/IconSet/Color/DomesticMedia.png,
+    }
+  - {
+      name: Telegram,
+      <<: *SelectProxy,
+      icon: https://git.imee.me/https://github.com/Koolson/Qure/raw/master/IconSet/Color/Telegram_X.png,
+    }
+  - {
+      name: Twitter,
+      <<: *SelectProxy,
+      icon: https://git.imee.me/https://github.com/Koolson/Qure/raw/master/IconSet/Color/X.png,
+    }
+  - {
+      name: 社交平台,
+      <<: *SelectProxy,
+      icon: https://git.imee.me/https://github.com/Koolson/Qure/raw/master/IconSet/Color/PBS.png,
+    }
+  - {
+      name: 货币平台,
+      <<: *SelectSG,
+      icon: https://raw.githubusercontent.com/Orz-3/mini/master/Alpha/Bitcloud.png,
+    }
+  - {
+      name: 游戏平台,
+      <<: *SelectProxy,
+      icon: https://git.imee.me/https://github.com/Koolson/Qure/raw/master/IconSet/Color/Game.png,
+    }
+  - {
+      name: 网速测试,
+      <<: *SelectProxy,
+      include-all: true,
+      filter: *FilterAll,
+      icon: https://git.imee.me/https://github.com/Koolson/Qure/raw/master/IconSet/Color/Speedtest.png,
+    }
+  # 公司
+  - {
+      name: 微软服务,
+      <<: *SelectProxy,
+      icon: https://git.imee.me/https://github.com/Koolson/Qure/raw/master/IconSet/Color/Microsoft.png,
+    }
+  - {
+      name: 谷歌服务,
+      <<: *SelectProxy,
+      icon: https://git.imee.me/https://github.com/Koolson/Qure/raw/master/IconSet/Color/Google_Search.png,
+    }
+  - {
+      name: 苹果服务,
+      <<: *SelectProxy,
+      icon: https://git.imee.me/https://github.com/Koolson/Qure/raw/master/IconSet/Color/Apple.png,
+    }
+  - {
+      name: 脸书服务,
+      <<: *SelectUS,
+      icon: https://git.imee.me/https://github.com/Koolson/Qure/raw/master/IconSet/Color/Facebook.png,
+    }
+  # 地区策略
+  - {
+      name: 香港策略,
+      type: select,
+      proxies: [香港自动, 香港均衡-散列, 香港均衡-轮询],
+      include-all: true,
+      filter: *FilterHK,
+      icon: https://git.imee.me/https://github.com/Koolson/Qure/raw/master/IconSet/Color/Hong_Kong.png,
+    }
+  - {
+      name: 新加坡策略,
+      type: select,
+      proxies: [新加坡自动, 新加坡均衡-散列, 新加坡均衡-轮询],
+      include-all: true,
+      filter: *FilterSG,
+      icon: https://git.imee.me/https://github.com/Koolson/Qure/raw/master/IconSet/Color/Singapore.png,
+    }
+  - {
+      name: 日本策略,
+      type: select,
+      proxies: [日本自动, 日本均衡-散列, 日本均衡-轮询],
+      include-all: true,
+      filter: *FilterJP,
+      icon: https://git.imee.me/https://github.com/Koolson/Qure/raw/master/IconSet/Color/Japan.png,
+    }
+  - {
+      name: 韩国策略,
+      type: select,
+      proxies: [韩国自动, 韩国均衡-散列, 韩国均衡-轮询],
+      include-all: true,
+      filter: *FilterKR,
+      icon: https://git.imee.me/https://github.com/Koolson/Qure/raw/master/IconSet/Color/Korea.png,
+    }
+  - {
+      name: 美国策略,
+      type: select,
+      proxies: [美国自动, 美国均衡-散列, 美国均衡-轮询],
+      include-all: true,
+      filter: *FilterUS,
+      icon: https://git.imee.me/https://github.com/Koolson/Qure/raw/master/IconSet/Color/United_States.png,
+    }
+  - {
+      name: 台湾策略,
+      type: select,
+      proxies: [台湾自动, 台湾均衡-散列, 台湾均衡-轮询],
+      include-all: true,
+      filter: *FilterTW,
+      icon: https://git.imee.me/https://github.com/Koolson/Qure/raw/master/IconSet/Color/Taiwan.png,
+    }
+  - {
+      name: 欧盟策略,
+      type: select,
+      proxies: [欧盟自动, 欧盟均衡-散列, 欧盟均衡-轮询],
+      include-all: true,
+      filter: *FilterEU,
+      icon: https://git.imee.me/https://github.com/Koolson/Qure/raw/master/IconSet/Color/European_Union.png,
+    }
+    # 其他策略
+  - {
+      name: 故障转移,
+      <<: *FallBack,
+      proxies:
+        [
+          香港策略,
+          新加坡策略,
+          日本策略,
+          韩国策略,
+          美国策略,
+          台湾策略,
+          欧盟策略,
+          全球手动,
+          冷门自选,
+          DIRECT,
+        ],
+      icon: https://git.imee.me/https://github.com/Koolson/Qure/raw/master/IconSet/Color/ULB.png,
+    }
+  - {
+      name: 链式代理,
+      type: relay,
+      proxies: [中转机, 落地机],
+      icon: https://git.imee.me/https://github.com/Koolson/Qure/raw/master/IconSet/Color/TIDAL_1.png,
+    }
+  - {
+      name: 中转机,
       type: select,
       proxies:
         [
-          🇭🇰 - 手动选择,
-          🇯🇵 - 手动选择,
-          🇰🇷 - 手动选择,
-          🇸🇬 - 手动选择,
-          🇺🇸 - 手动选择,
-          🇬🇧 - 手动选择,
-          🇫🇷 - 手动选择,
-          🇩🇪 - 手动选择,
-          🇹🇼 - 手动选择,
-          Others - 手动选择,
+          香港策略,
+          台湾策略,
+          日本策略,
+          新加坡策略,
+          韩国策略,
+          美国策略,
+          欧盟策略,
+          冷门自选,
+          全球手动,
         ],
-      url: https://cp.cloudflare.com,
-      icon: https://raw.githubusercontent.com/Orz-3/mini/master/Color/Cylink.png,
+      icon: https://git.imee.me/https://github.com/Koolson/Qure/raw/master/IconSet/Color/Rocket.png,
     }
   - {
-      name: 自动选择,
+      name: 落地机,
       type: select,
-      proxies:
-        [
-          🇭🇰 - 自动选择,
-          🇯🇵 - 自动选择,
-          🇰🇷 - 自动选择,
-          🇸🇬 - 自动选择,
-          🇺🇸 - 自动选择,
-          🇬🇧 - 自动选择,
-          🇫🇷 - 自动选择,
-          🇩🇪 - 自动选择,
-          🇹🇼 - 自动选择,
-        ],
-      url: https://cp.cloudflare.com,
-      icon: https://raw.githubusercontent.com/Orz-3/mini/master/Color/Urltest.png,
+      include-all: true,
+      filter: *FilterAll,
+      icon: https://git.imee.me/https://github.com/Koolson/Qure/raw/master/IconSet/Color/Domestic.png,
     }
   - {
-      name: ✈️ 电报信息,
+      name: 国内网站,
       type: select,
-      proxies:
-        [
-          🎯 节点选择,
-          🇭🇰 - 自动选择,
-          🇯🇵 - 自动选择,
-          🇰🇷 - 自动选择,
-          🇸🇬 - 自动选择,
-          🇺🇸 - 自动选择,
-          🇬🇧 - 自动选择,
-          🇫🇷 - 自动选择,
-          🇩🇪 - 自动选择,
-          🇹🇼 - 自动选择,
-        ],
-      icon: https://raw.githubusercontent.com/Orz-3/mini/master/Color/Telegram.png,
+      proxies: [DIRECT, 默认代理],
+      icon: https://git.imee.me/https://github.com/Koolson/Qure/raw/master/IconSet/Color/China.png,
     }
   - {
-      name: 🤖 AIGC,
+      name: 国外网站,
+      <<: *SelectProxy,
+      icon: https://git.imee.me/https://github.com/Koolson/Qure/raw/master/IconSet/Color/Global.png,
+    }
+
+  - {
+      name: 冷门自选,
       type: select,
-      proxies:
-        [
-          🇺🇸 - 自动选择,
-          🎯 节点选择,
-          🇭🇰 - 自动选择,
-          🇯🇵 - 自动选择,
-          🇰🇷 - 自动选择,
-          🇸🇬 - 自动选择,
-          🇺🇸 - 自动选择,
-          🇬🇧 - 自动选择,
-          🇫🇷 - 自动选择,
-          🇩🇪 - 自动选择,
-          🇹🇼 - 自动选择,
-        ],
-      icon: https://raw.githubusercontent.com/Orz-3/mini/master/Color/OpenAI.png,
+      include-all: true,
+      filter: *FilterOther,
+      icon: https://git.imee.me/https://github.com/Koolson/Qure/raw/master/IconSet/Color/Europe_Map.png,
     }
   - {
-      name: 🍎 苹果服务,
+      name: 抖快书定位,
       type: select,
       proxies:
         [
           DIRECT,
-          🎯 节点选择,
-          🇭🇰 - 自动选择,
-          🇯🇵 - 自动选择,
-          🇰🇷 - 自动选择,
-          🇸🇬 - 自动选择,
-          🇺🇸 - 自动选择,
-          🇬🇧 - 自动选择,
-          🇫🇷 - 自动选择,
-          🇩🇪 - 自动选择,
-          🇹🇼 - 自动选择,
+          香港策略,
+          台湾策略,
+          新加坡策略,
+          日本策略,
+          韩国策略,
+          美国策略,
+          欧盟策略,
         ],
-      icon: https://raw.githubusercontent.com/Orz-3/mini/master/Color/Apple.png,
+      icon: https://git.imee.me/https://github.com/Koolson/Qure/raw/master/IconSet/Color/Null_Nation.png,
     }
   - {
-      name: Ⓜ️ 微软服务,
+      name: 漏网之鱼,
       type: select,
-      proxies:
-        [
-          DIRECT,
-          🎯 节点选择,
-          🇭🇰 - 自动选择,
-          🇯🇵 - 自动选择,
-          🇰🇷 - 自动选择,
-          🇸🇬 - 自动选择,
-          🇺🇸 - 自动选择,
-          🇬🇧 - 自动选择,
-          🇫🇷 - 自动选择,
-          🇩🇪 - 自动选择,
-          🇹🇼 - 自动选择,
-        ],
-      icon: https://raw.githubusercontent.com/Orz-3/mini/master/Color/Microsoft.png,
+      proxies: [默认代理, DIRECT],
+      icon: https://git.imee.me/https://github.com/Koolson/Qure/raw/master/IconSet/Color/Final.png,
+    }
+  # 自动测速
+  - {
+      name: 香港自动,
+      <<: *UrlTest,
+      filter: *FilterHK,
+      icon: https://git.imee.me/https://github.com/Koolson/Qure/raw/master/IconSet/Color/Auto.png,
+    }
+  - {
+      name: 台湾自动,
+      <<: *UrlTest,
+      filter: *FilterTW,
+      icon: https://git.imee.me/https://github.com/Koolson/Qure/raw/master/IconSet/Color/Auto.png,
+    }
+  - {
+      name: 新加坡自动,
+      <<: *UrlTest,
+      filter: *FilterSG,
+      icon: https://git.imee.me/https://github.com/Koolson/Qure/raw/master/IconSet/Color/Auto.png,
+    }
+  - {
+      name: 日本自动,
+      <<: *UrlTest,
+      filter: *FilterJP,
+      icon: https://git.imee.me/https://github.com/Koolson/Qure/raw/master/IconSet/Color/Auto.png,
+    }
+  - {
+      name: 韩国自动,
+      <<: *UrlTest,
+      filter: *FilterKR,
+      icon: https://git.imee.me/https://github.com/Koolson/Qure/raw/master/IconSet/Color/Auto.png,
+    }
+  - {
+      name: 美国自动,
+      <<: *UrlTest,
+      filter: *FilterUS,
+      icon: https://git.imee.me/https://github.com/Koolson/Qure/raw/master/IconSet/Color/Auto.png,
+    }
+  - {
+      name: 欧盟自动,
+      <<: *UrlTest,
+      filter: *FilterEU,
+      icon: https://git.imee.me/https://github.com/Koolson/Qure/raw/master/IconSet/Color/Auto.png,
+    }
+  # 负载均衡-散列
+  - {
+      name: 香港均衡-散列,
+      <<: *LoadBalanceCH,
+      filter: *FilterHK,
+      icon: https://git.imee.me/https://github.com/Koolson/Qure/raw/master/IconSet/Color/Round_Robin_1.png,
+    }
+  - {
+      name: 台湾均衡-散列,
+      <<: *LoadBalanceCH,
+      filter: *FilterTW,
+      icon: https://git.imee.me/https://github.com/Koolson/Qure/raw/master/IconSet/Color/Round_Robin_1.png,
+    }
+  - {
+      name: 新加坡均衡-散列,
+      <<: *LoadBalanceCH,
+      filter: *FilterSG,
+      icon: https://git.imee.me/https://github.com/Koolson/Qure/raw/master/IconSet/Color/Round_Robin_1.png,
+    }
+  - {
+      name: 日本均衡-散列,
+      <<: *LoadBalanceCH,
+      filter: *FilterJP,
+      icon: https://git.imee.me/https://github.com/Koolson/Qure/raw/master/IconSet/Color/Round_Robin_1.png,
+    }
+  - {
+      name: 韩国均衡-散列,
+      <<: *LoadBalanceCH,
+      filter: *FilterKR,
+      icon: https://git.imee.me/https://github.com/Koolson/Qure/raw/master/IconSet/Color/Round_Robin_1.png,
+    }
+  - {
+      name: 美国均衡-散列,
+      <<: *LoadBalanceCH,
+      filter: *FilterUS,
+      icon: https://git.imee.me/https://github.com/Koolson/Qure/raw/master/IconSet/Color/Round_Robin_1.png,
+    }
+  - {
+      name: 欧盟均衡-散列,
+      <<: *LoadBalanceCH,
+      filter: *FilterEU,
+      icon: https://git.imee.me/https://github.com/Koolson/Qure/raw/master/IconSet/Color/Round_Robin_1.png,
+    }
+  # 负载均衡-轮询
+  - {
+      name: 香港均衡-轮询,
+      <<: *LoadBalanceCR,
+      filter: *FilterHK,
+      icon: https://git.imee.me/https://github.com/Koolson/Qure/raw/master/IconSet/Color/Round_Robin.png,
+    }
+  - {
+      name: 台湾均衡-轮询,
+      <<: *LoadBalanceCR,
+      filter: *FilterTW,
+      icon: https://git.imee.me/https://github.com/Koolson/Qure/raw/master/IconSet/Color/Round_Robin.png,
+    }
+  - {
+      name: 新加坡均衡-轮询,
+      <<: *LoadBalanceCR,
+      filter: *FilterSG,
+      icon: https://git.imee.me/https://github.com/Koolson/Qure/raw/master/IconSet/Color/Round_Robin.png,
+    }
+  - {
+      name: 日本均衡-轮询,
+      <<: *LoadBalanceCR,
+      filter: *FilterJP,
+      icon: https://git.imee.me/https://github.com/Koolson/Qure/raw/master/IconSet/Color/Round_Robin.png,
+    }
+  - {
+      name: 韩国均衡-轮询,
+      <<: *LoadBalanceCR,
+      filter: *FilterKR,
+      icon: https://git.imee.me/https://github.com/Koolson/Qure/raw/master/IconSet/Color/Round_Robin.png,
+    }
+  - {
+      name: 美国均衡-轮询,
+      <<: *LoadBalanceCR,
+      filter: *FilterUS,
+      icon: https://git.imee.me/https://github.com/Koolson/Qure/raw/master/IconSet/Color/Round_Robin.png,
+    }
+  - {
+      name: 欧盟均衡-轮询,
+      <<: *LoadBalanceCR,
+      filter: *FilterEU,
+      icon: https://git.imee.me/https://github.com/Koolson/Qure/raw/master/IconSet/Color/Round_Robin.png,
     }
 
-  # 自动选择
-  - { name: 🇭🇰 - 自动选择, <<: *Auto, filter: *FilterHK }
-  - { name: 🇯🇵 - 自动选择, <<: *Auto, filter: *FilterJP }
-  - { name: 🇰🇷 - 自动选择, <<: *Auto, filter: *FilterKR }
-  - { name: 🇸🇬 - 自动选择, <<: *Auto, filter: *FilterSG }
-  - { name: 🇺🇸 - 自动选择, <<: *Auto, filter: *FilterUS }
-  - { name: 🇬🇧 - 自动选择, <<: *Auto, filter: *FilterUK }
-  - { name: 🇫🇷 - 自动选择, <<: *Auto, filter: *FilterFR }
-  - { name: 🇩🇪 - 自动选择, <<: *Auto, filter: *FilterDE }
-  - { name: 🇹🇼 - 自动选择, <<: *Auto, filter: *FilterTW }
-
-  # 手动选择
-  - { name: 🇭🇰 - 手动选择, <<: *Select, filter: *FilterHK }
-  - { name: 🇯🇵 - 手动选择, <<: *Select, filter: *FilterJP }
-  - { name: 🇰🇷 - 手动选择, <<: *Select, filter: *FilterKR }
-  - { name: 🇸🇬 - 手动选择, <<: *Select, filter: *FilterSG }
-  - { name: 🇺🇸 - 手动选择, <<: *Select, filter: *FilterUS }
-  - { name: 🇬🇧 - 手动选择, <<: *Select, filter: *FilterUK }
-  - { name: 🇫🇷 - 手动选择, <<: *Select, filter: *FilterFR }
-  - { name: 🇩🇪 - 手动选择, <<: *Select, filter: *FilterDE }
-  - { name: 🇹🇼 - 手动选择, <<: *Select, filter: *FilterTW }
-  - { name: Others - 手动选择, <<: *Select, filter: *FilterOthers }
-
-  # 全部节点
-  - { name: AllIn - 手动选择, <<: *Select, filter: *FilterAll }
-  - { name: AllIn - 自动选择, <<: *Auto, filter: *FilterAll }
-
-### 规则配置
-RuleSet_classical:
-  &RuleSet_classical {
-    type: http,
-    behavior: classical,
-    interval: 43200,
-    format: text,
-    proxy: 🎯 节点选择,
-  }
-RuleSet_domain:
-  &RuleSet_domain {
-    type: http,
-    behavior: domain,
-    interval: 43200,
-    format: text,
-    proxy: 🎯 节点选择,
-  }
-RuleSet_ipcidr:
-  &RuleSet_ipcidr {
-    type: http,
-    behavior: ipcidr,
-    interval: 43200,
-    format: text,
-    proxy: 🎯 节点选择,
-  }
-
-# 订阅规则
+# 远程规则集
 rule-providers:
-  reject_non_ip_no_drop:
-    <<: *RuleSet_classical
-    url: "https://ruleset.skk.moe/Clash/non_ip/reject-no-drop.txt"
-    path: "./rule_set/sukkaw_ruleset/reject_non_ip_no_drop.txt"
-
-  reject_non_ip_drop:
-    <<: *RuleSet_classical
-    url: https://ruleset.skk.moe/Clash/non_ip/reject-drop.txt
-    path: ./rule_set/sukkaw_ruleset/reject_non_ip_drop.txt
-
-  reject_non_ip:
-    <<: *RuleSet_classical
-    url: https://ruleset.skk.moe/Clash/non_ip/reject.txt
-    path: ./rule_set/sukkaw_ruleset/reject_non_ip.txt
-
-  reject_domainset:
-    <<: *RuleSet_domain
-    url: https://ruleset.skk.moe/Clash/domainset/reject.txt
-    path: ./rule_set/sukkaw_ruleset/reject_domainset.txt
-
-  reject_ip:
-    <<: *RuleSet_classical
-    url: https://ruleset.skk.moe/Clash/ip/reject.txt
-    path: ./rule_set/sukkaw_ruleset/reject_ip.txt
-
-  cdn_domainset:
-    <<: *RuleSet_domain
-    url: https://ruleset.skk.moe/Clash/domainset/cdn.txt
-    path: ./rule_set/sukkaw_ruleset/cdn_domainset.txt
-
-  cdn_non_ip:
-    <<: *RuleSet_domain
-    url: https://ruleset.skk.moe/Clash/non_ip/cdn.txt
-    path: ./rule_set/sukkaw_ruleset/cdn_non_ip.txt
-
-  # 所有流媒体（包括上述所有流媒体）
-  stream_non_ip:
-    <<: *RuleSet_classical
-    url: https://ruleset.skk.moe/Clash/non_ip/stream.txt
-    path: ./rule_set/sukkaw_ruleset/stream_non_ip.txt
-  stream_ip:
-    <<: *RuleSet_classical
-    url: https://ruleset.skk.moe/Clash/ip/stream.txt
-    path: ./rule_set/sukkaw_ruleset/stream_ip.txt
-
-  ai_non_ip:
-    <<: *RuleSet_classical
-    url: https://ruleset.skk.moe/Clash/non_ip/ai.txt
-    path: ./rule_set/sukkaw_ruleset/ai_non_ip.txt
-
-  telegram_non_ip:
-    <<: *RuleSet_classical
-    url: https://ruleset.skk.moe/Clash/non_ip/telegram.txt
-    path: ./rule_set/sukkaw_ruleset/telegram_non_ip.txt
-
+  download:
+    {
+      <<: *ClassicalYaml,
+      url: https://git.imee.me/https://github.com/666OS/YYDS/raw/main/mihomo/rules/download.yaml,
+    }
+  location_ip:
+    {
+      <<: *ClassicalYaml,
+      url: https://git.imee.me/https://github.com/666OS/YYDS/raw/main/mihomo/rules/location_ip.yaml,
+    }
+  XPTV:
+    {
+      <<: *ClassicalYaml,
+      url: https://git.imee.me/https://github.com/666OS/YYDS/raw/main/mihomo/rules/XPTV.yaml,
+    }
+  fix-direct:
+    {
+      <<: *ClassicalYaml,
+      url: https://git.imee.me/https://github.com/666OS/YYDS/raw/main/mihomo/rules/fix-direct.yaml,
+    }
+  Line:
+    {
+      <<: *ClassicalYaml,
+      url: https://git.imee.me/https://github.com/666OS/YYDS/raw/main/mihomo/rules/Line.yaml,
+    }
+  speedtest:
+    {
+      <<: *ClassicalYaml,
+      url: https://git.imee.me/https://github.com/666OS/YYDS/raw/main/mihomo/rules/speedtest.yaml,
+    }
+  emby:
+    {
+      <<: *ClassicalText,
+      url: https://git.imee.me/https://github.com/666OS/YYDS/raw/main/mihomo/rules/emby.list,
+    }
+  openai:
+    {
+      <<: *DomainMrs,
+      url: https://git.imee.me/https://github.com/666OS/YYDS/raw/main/mihomo/rules/openai.mrs,
+    }
+  telegram:
+    {
+      <<: *DomainMrs,
+      url: https://git.imee.me/https://github.com/666OS/YYDS/raw/main/mihomo/rules/telegram.mrs,
+    }
+  twitter:
+    {
+      <<: *DomainMrs,
+      url: https://git.imee.me/https://github.com/666OS/YYDS/raw/main/mihomo/rules/twitter.mrs,
+    }
+  instagram:
+    {
+      <<: *DomainMrs,
+      url: https://git.imee.me/https://github.com/666OS/YYDS/raw/main/mihomo/rules/instagram.mrs,
+    }
+  youtube:
+    {
+      <<: *DomainMrs,
+      url: https://git.imee.me/https://github.com/666OS/YYDS/raw/main/mihomo/rules/youtube.mrs,
+    }
+  spotify:
+    {
+      <<: *DomainMrs,
+      url: https://git.imee.me/https://github.com/666OS/YYDS/raw/main/mihomo/rules/spotify.mrs,
+    }
+  netflix:
+    {
+      <<: *DomainMrs,
+      url: https://git.imee.me/https://github.com/666OS/YYDS/raw/main/mihomo/rules/netflix.mrs,
+    }
+  disney:
+    {
+      <<: *DomainMrs,
+      url: https://git.imee.me/https://github.com/666OS/YYDS/raw/main/mihomo/rules/disney.mrs,
+    }
+  hbo:
+    {
+      <<: *DomainMrs,
+      url: https://git.imee.me/https://github.com/666OS/YYDS/raw/main/mihomo/rules/hbo.mrs,
+    }
+  tiktok:
+    {
+      <<: *DomainMrs,
+      url: https://git.imee.me/https://github.com/666OS/YYDS/raw/main/mihomo/rules/tiktok.mrs,
+    }
+  github:
+    {
+      <<: *DomainMrs,
+      url: https://git.imee.me/https://github.com/666OS/YYDS/raw/main/mihomo/rules/github.mrs,
+    }
+  onedrive:
+    {
+      <<: *DomainMrs,
+      url: https://git.imee.me/https://github.com/666OS/YYDS/raw/main/mihomo/rules/onedrive.mrs,
+    }
+  microsoft:
+    {
+      <<: *DomainMrs,
+      url: https://git.imee.me/https://github.com/666OS/YYDS/raw/main/mihomo/rules/microsoft.mrs,
+    }
+  facebook:
+    {
+      <<: *DomainMrs,
+      url: https://git.imee.me/https://github.com/666OS/YYDS/raw/main/mihomo/rules/facebook.mrs,
+    }
+  meta:
+    {
+      <<: *DomainMrs,
+      url: https://git.imee.me/https://github.com/666OS/YYDS/raw/main/mihomo/rules/meta.mrs,
+    }
+  google:
+    {
+      <<: *DomainMrs,
+      url: https://git.imee.me/https://github.com/666OS/YYDS/raw/main/mihomo/rules/google.mrs,
+    }
+  apple-cn:
+    {
+      <<: *DomainMrs,
+      url: https://git.imee.me/https://github.com/666OS/YYDS/raw/main/mihomo/rules/apple-cn.mrs,
+    }
+  apple:
+    {
+      <<: *DomainMrs,
+      url: https://git.imee.me/https://github.com/666OS/YYDS/raw/main/mihomo/rules/apple.mrs,
+    }
+  paypal@cn:
+    {
+      <<: *DomainMrs,
+      url: https://git.imee.me/https://github.com/666OS/YYDS/raw/main/mihomo/rules/paypal@cn.mrs,
+    }
+  paypal:
+    {
+      <<: *DomainMrs,
+      url: https://git.imee.me/https://github.com/666OS/YYDS/raw/main/mihomo/rules/paypal.mrs,
+    }
+  cloudflare-cn:
+    {
+      <<: *DomainMrs,
+      url: https://git.imee.me/https://github.com/666OS/YYDS/raw/main/mihomo/rules/cloudflare-cn.mrs,
+    }
+  category-public-tracker:
+    {
+      <<: *DomainMrs,
+      url: https://git.imee.me/https://github.com/666OS/YYDS/raw/main/mihomo/rules/category-public-tracker.mrs,
+    }
+  category-games:
+    {
+      <<: *DomainMrs,
+      url: https://git.imee.me/https://github.com/666OS/YYDS/raw/main/mihomo/rules/category-games.mrs,
+    }
+  category-cryptocurrency:
+    {
+      <<: *DomainMrs,
+      url: https://git.imee.me/https://github.com/666OS/YYDS/raw/main/mihomo/rules/category-cryptocurrency.mrs,
+    }
+  category-social-media-!cn:
+    {
+      <<: *DomainMrs,
+      url: https://git.imee.me/https://github.com/666OS/YYDS/raw/main/mihomo/rules/category-social-media-!cn.mrs,
+    }
+  category-ai-!cn:
+    {
+      <<: *DomainMrs,
+      url: https://git.imee.me/https://github.com/666OS/YYDS/raw/main/mihomo/rules/category-ai-!cn.mrs,
+    }
+  geolocation-!cn:
+    {
+      <<: *DomainMrs,
+      url: https://git.imee.me/https://github.com/666OS/YYDS/raw/main/mihomo/rules/geolocation-!cn.mrs,
+    }
+  connectivity-check:
+    {
+      <<: *DomainMrs,
+      url: https://git.imee.me/https://github.com/666OS/YYDS/raw/main/mihomo/rules/connectivity-check.mrs,
+    }
+  private_domain:
+    {
+      <<: *DomainMrs,
+      url: https://git.imee.me/https://github.com/666OS/YYDS/raw/main/mihomo/rules/private.mrs,
+    }
+  cn_domain:
+    {
+      <<: *DomainMrs,
+      url: https://git.imee.me/https://github.com/666OS/YYDS/raw/main/mihomo/rules/cn.mrs,
+    }
+  # IP规则集
+  facebook_ip:
+    {
+      <<: *IPcidrMrs,
+      url: https://git.imee.me/https://github.com/666OS/YYDS/raw/main/mihomo/rules/facebook_ip.mrs,
+    }
+  google_ip:
+    {
+      <<: *IPcidrMrs,
+      url: https://git.imee.me/https://github.com/666OS/YYDS/raw/main/mihomo/rules/google_ip.mrs,
+    }
+  netflix_ip:
+    {
+      <<: *IPcidrMrs,
+      url: https://git.imee.me/https://github.com/666OS/YYDS/raw/main/mihomo/rules/netflix_ip.mrs,
+    }
+  twitter_ip:
+    {
+      <<: *IPcidrMrs,
+      url: https://git.imee.me/https://github.com/666OS/YYDS/raw/main/mihomo/rules/twitter_ip.mrs,
+    }
   telegram_ip:
-    <<: *RuleSet_classical
-    url: https://ruleset.skk.moe/Clash/ip/telegram.txt
-    path: ./rule_set/sukkaw_ruleset/telegram_ip.txt
+    {
+      <<: *IPcidrMrs,
+      url: https://git.imee.me/https://github.com/666OS/YYDS/raw/main/mihomo/rules/telegram_ip.mrs,
+    }
+  private_ip:
+    {
+      <<: *IPcidrMrs,
+      url: https://git.imee.me/https://github.com/666OS/YYDS/raw/main/mihomo/rules/private_ip.mrs,
+    }
+  cn_ip:
+    {
+      <<: *IPcidrMrs,
+      url: https://git.imee.me/https://github.com/666OS/YYDS/raw/main/mihomo/rules/cn_ip.mrs,
+    }
 
-  apple_cdn:
-    <<: *RuleSet_domain
-    url: https://ruleset.skk.moe/Clash/domainset/apple_cdn.txt
-    path: ./rule_set/sukkaw_ruleset/apple_cdn.txt
-
-  apple_services:
-    <<: *RuleSet_classical
-    url: https://ruleset.skk.moe/Clash/non_ip/apple_services.txt
-    path: ./rule_set/sukkaw_ruleset/apple_services.txt
-
-  apple_cn_non_ip:
-    <<: *RuleSet_classical
-    url: https://ruleset.skk.moe/Clash/non_ip/apple_cn.txt
-    path: ./rule_set/sukkaw_ruleset/apple_cn_non_ip.txt
-
-  microsoft_cdn_non_ip:
-    <<: *RuleSet_classical
-    url: https://ruleset.skk.moe/Clash/non_ip/microsoft_cdn.txt
-    path: ./rule_set/sukkaw_ruleset/microsoft_cdn_non_ip.txt
-
-  microsoft_non_ip:
-    <<: *RuleSet_classical
-    url: https://ruleset.skk.moe/Clash/non_ip/microsoft.txt
-    path: ./rule_set/sukkaw_ruleset/microsoft_non_ip.txt
-
-  # 软件更新、操作系统等大文件下载
-  download_domainset:
-    <<: *RuleSet_domain
-    url: https://ruleset.skk.moe/Clash/domainset/download.txt
-    path: ./rule_set/sukkaw_ruleset/download_domainset.txt
-  download_non_ip:
-    <<: *RuleSet_domain
-    url: https://ruleset.skk.moe/Clash/non_ip/download.txt
-    path: ./rule_set/sukkaw_ruleset/download_non_ip.txt
-
-  # 内网域名和局域网 IP
-  lan_non_ip:
-    <<: *RuleSet_classical
-    url: https://ruleset.skk.moe/Clash/non_ip/lan.txt
-    path: ./rule_set/sukkaw_ruleset/lan_non_ip.txt
-  lan_ip:
-    <<: *RuleSet_classical
-    url: https://ruleset.skk.moe/Clash/ip/lan.txt
-    path: ./rule_set/sukkaw_ruleset/lan_ip.txt
-
-  domestic_non_ip:
-    <<: *RuleSet_classical
-    url: https://ruleset.skk.moe/Clash/non_ip/domestic.txt
-    path: ./rule_set/sukkaw_ruleset/domestic_non_ip.txt
-  direct_non_ip:
-    <<: *RuleSet_classical
-    url: https://ruleset.skk.moe/Clash/non_ip/direct.txt
-    path: ./rule_set/sukkaw_ruleset/direct_non_ip.txt
-  global_non_ip:
-    <<: *RuleSet_classical
-    url: https://ruleset.skk.moe/Clash/non_ip/global.txt
-    path: ./rule_set/sukkaw_ruleset/global_non_ip.txt
-  domestic_ip:
-    <<: *RuleSet_classical
-    url: https://ruleset.skk.moe/Clash/ip/domestic.txt
-    path: ./rule_set/sukkaw_ruleset/domestic_ip.txt
-
-  china_ip:
-    <<: *RuleSet_ipcidr
-    url: https://ruleset.skk.moe/Clash/ip/china_ip.txt
-    path: ./rule_set/sukkaw_ruleset/china_ip.txt
-
-# 分流规则
+# 路由
 rules:
-  ### 非 IP 类规则
-  - RULE-SET,reject_non_ip,REJECT
-  - RULE-SET,reject_domainset,REJECT
-  - RULE-SET,reject_non_ip_drop,REJECT-DROP
-  - RULE-SET,reject_non_ip_no_drop,REJECT
-  - RULE-SET,cdn_domainset,🎯 节点选择
-  - RULE-SET,cdn_non_ip,🎯 节点选择
-  - RULE-SET,stream_non_ip,🇺🇸 - 自动选择
-  - RULE-SET,telegram_non_ip,✈️ 电报信息
-  - RULE-SET,apple_cdn,DIRECT
-  - RULE-SET,download_domainset,🎯 节点选择
-  - RULE-SET,download_non_ip,🎯 节点选择
-  - RULE-SET,microsoft_cdn_non_ip,DIRECT
-  - RULE-SET,apple_cn_non_ip,DIRECT
-  - RULE-SET,apple_services,🍎 苹果服务
-  - RULE-SET,microsoft_non_ip,Ⓜ️ 微软服务
-  - RULE-SET,ai_non_ip,🤖 AIGC
-  - RULE-SET,global_non_ip,🎯 节点选择
-  - RULE-SET,domestic_non_ip,DIRECT
-  - RULE-SET,direct_non_ip,DIRECT
-  - RULE-SET,lan_non_ip,DIRECT
+  # 常用必备
+  - DST-PORT,123,DIRECT
+  # - DOMAIN-SUFFIX,imee.me,DIRECT
+  # 防御
+  - RULE-SET,category-public-tracker,REJECT-DROP
+  # 域名路由
+  - RULE-SET,fix-direct,DIRECT
+  - RULE-SET,XPTV,DIRECT
+  - RULE-SET,location_ip,抖快书定位
+  - RULE-SET,speedtest,网速测试
+  - RULE-SET,openai,AI平台
+  - RULE-SET,category-ai-!cn,AI平台
+  - RULE-SET,telegram,Telegram
+  - RULE-SET,twitter,Twitter
+  - RULE-SET,emby,Emby
+  - RULE-SET,youtube,YouTube
+  - RULE-SET,spotify,国际媒体
+  - RULE-SET,netflix,NetFlix
+  - RULE-SET,disney,国际媒体
+  - RULE-SET,hbo,国际媒体
+  - RULE-SET,tiktok,国际媒体
+  - RULE-SET,github,微软服务
+  - RULE-SET,onedrive,微软服务
+  - RULE-SET,microsoft,微软服务
+  - RULE-SET,instagram,脸书服务
+  - RULE-SET,facebook,脸书服务
+  - RULE-SET,meta,脸书服务
+  - RULE-SET,google,谷歌服务
+  - RULE-SET,apple-cn,国内网站
+  - RULE-SET,apple,苹果服务
+  - RULE-SET,paypal@cn,国内网站
+  - RULE-SET,paypal,货币平台
+  - RULE-SET,category-cryptocurrency,货币平台
+  - RULE-SET,cloudflare-cn,国内网站
+  - RULE-SET,category-games,游戏平台
+  - RULE-SET,Line,社交平台
+  - RULE-SET,category-social-media-!cn,社交平台
+  - RULE-SET,download,DIRECT
+  - RULE-SET,cn_domain,国内网站
+  - RULE-SET,geolocation-!cn,国外网站
 
-  ### IP 类规则
-  - RULE-SET,reject_ip,REJECT
-  - RULE-SET,telegram_ip,✈️ 电报信息
-  - RULE-SET,stream_ip,🇺🇸 - 自动选择
-  - RULE-SET,lan_ip,DIRECT
-  - RULE-SET,domestic_ip,DIRECT
-  - RULE-SET,china_ip,DIRECT
-  - MATCH,🎯 节点选择
+  # IP路由
+  - RULE-SET,private_ip,国内网站,no-resolve
+  - RULE-SET,facebook_ip,脸书服务,no-resolve
+  - RULE-SET,google_ip,谷歌服务,no-resolve
+  - RULE-SET,netflix_ip,NetFlix,no-resolve
+  - RULE-SET,twitter_ip,Twitter,no-resolve
+  - RULE-SET,telegram_ip,Telegram,no-resolve
+  - RULE-SET,cn_ip,国内网站,no-resolve
+  - MATCH,漏网之鱼
